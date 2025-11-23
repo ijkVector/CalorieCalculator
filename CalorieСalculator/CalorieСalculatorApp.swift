@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct Calorie_alculatorApp: App {
+struct CalorieСalculatorApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,

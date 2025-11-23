@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import Calorie_alculator
+@testable import CalorieСalculator
 
 struct Calorie_alculatorTests {
 

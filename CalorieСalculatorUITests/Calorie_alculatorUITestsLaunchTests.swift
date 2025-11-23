@@ -7,7 +7,7 @@
 
 import XCTest
 
-final class Calorie_alculatorUITestsLaunchTests: XCTestCase {
+final class CalorieСalculatorUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
