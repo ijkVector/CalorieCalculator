@@ -62,6 +62,29 @@ struct CalorieСalculatorView: View {
             } message: {
                 Text("Are you sure you want to delete this item?")
             }
+            .alert(
+                viewModel.duplicateAlertTitle,
+                isPresented: $viewModel.showDuplicateAlert
+            ) {
+                Button("Cancel", role: .cancel) {
+                    // Очистка состояния
+                    viewModel.duplicateItem = nil
+                }
+                
+                Button("Add Anyway") {
+                    Task {
+                        await viewModel.addDuplicateAnyway()
+                    }
+                }
+                
+                Button("Replace", role: .destructive) {
+                    Task {
+                        await viewModel.replaceWithNew()
+                    }
+                }
+            } message: {
+                Text(viewModel.duplicateAlertMessage)
+            }
         }
     }
     
@@ -157,7 +180,6 @@ struct CalorieСalculatorView: View {
     private func addFoodItem() {
         Task {
             await viewModel.addFoodItem(input: inputText)
-            // Очистить ввод только при успехе (ViewModel обрабатывает ошибки)
             inputText = ""
         }
     }
@@ -170,7 +192,6 @@ struct FoodItemRow: View {
     
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Image placeholder or actual image
             if let imageData = item.imageData,
                let uiImage = UIImage(data: imageData) {
                 Image(uiImage: uiImage)
