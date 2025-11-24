@@ -20,21 +20,21 @@ enum FoodInputValidationError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .emptyInput:
-            return "Введите название еды и калории"
+            return "Enter food name and calories"
         case .invalidFormat:
-            return "Формат: 'Название еды 100' (калории в конце)"
+            return "Format: 'Food Name 100' (calories at the end)"
         case .missingName:
-            return "Требуется название еды"
+            return "Food name is required"
         case .missingCalories:
-            return "Требуются калории"
+            return "Calories are required"
         case .caloriesNotNumeric:
-            return "Калории должны быть числом"
+            return "Calories must be a number"
         case .caloriesOutOfRange(let value):
-            return "Калории \(value) вне диапазона (1-10 000)"
+            return "Calories \(value) out of range (1-10,000)"
         case .nameTooShort:
-            return "Название еды слишком короткое"
+            return "Food name is too short"
         case .nameTooLong:
-            return "Название еды слишком длинное (макс 100 символов)"
+            return "Food name is too long (max 100 characters)"
         }
     }
 }

@@ -16,15 +16,18 @@ final class CalorieСalculatorViewModel {
     
     private let repository: FoodRepositoryProtocol
     private let inputValidator: FoodInputValidating
+    private let duplicateChecker: FoodDuplicateChecking
     
     //MARK: - Init
     
     init(
         repository: FoodRepositoryProtocol,
-        inputValidator: FoodInputValidating
+        inputValidator: FoodInputValidating,
+        duplicateChecker: FoodDuplicateChecking
     ) {
         self.repository = repository
         self.inputValidator = inputValidator
+        self.duplicateChecker = duplicateChecker
     }
     
     //MARK: - State
@@ -34,6 +37,14 @@ final class CalorieСalculatorViewModel {
     private(set) var errorMessage: String? = nil
     
     var showErrorAlert = false
+    
+    // Alert state для дубликатов
+    var showDuplicateAlert = false
+    var duplicateAlertTitle = ""
+    var duplicateAlertMessage = ""
+    var duplicateItem: FoodItem?
+    
+    private var pendingValidatedInput: ValidatedFoodInput?
     
     //MARK: - Computed Properties
     
@@ -51,13 +62,24 @@ final class CalorieСalculatorViewModel {
         do {
             let validated = try inputValidator.validate(input)
             
-            let newItem = FoodItem(
+            let duplicateResult = duplicateChecker.checkForDuplicate(
                 name: validated.name,
-                calories: validated.calories
+                in: items
             )
             
-            try await repository.createFood(item: newItem)
-            await loadFoodItems()
+            switch duplicateResult {
+            case .unique:
+                let newItem = FoodItem(
+                    name: validated.name,
+                    calories: validated.calories
+                )
+                try await repository.createFood(item: newItem)
+                await loadFoodItems()
+                
+            case .duplicate(let existingItem):
+                pendingValidatedInput = validated
+                showDuplicateAlert(for: existingItem, newCalories: validated.calories)
+            }
             
         } catch let error as FoodInputValidationError {
             errorMessage = error.localizedDescription
@@ -104,6 +126,53 @@ final class CalorieСalculatorViewModel {
         }
     }
     
+    // MARK: - Duplicate Handling
+    
+    func addDuplicateAnyway() async {
+        guard let validated = pendingValidatedInput else { return }
+        
+        do {
+            let newItem = FoodItem(
+                name: validated.name,
+                calories: validated.calories
+            )
+            try await repository.createFood(item: newItem)
+            await loadFoodItems()
+            
+            pendingValidatedInput = nil
+            duplicateItem = nil
+            
+        } catch let error as FoodRepositoryError {
+            handleDomainError(error)
+        } catch {
+            handleError(message: error.localizedDescription)
+        }
+    }
+    
+    func replaceWithNew() async {
+        guard let validated = pendingValidatedInput,
+              let oldItem = duplicateItem else { return }
+        
+        do {
+            try await repository.deleteFood(id: oldItem.id)
+            
+            let newItem = FoodItem(
+                name: validated.name,
+                calories: validated.calories
+            )
+            try await repository.createFood(item: newItem)
+            await loadFoodItems()
+            
+            pendingValidatedInput = nil
+            duplicateItem = nil
+            
+        } catch let error as FoodRepositoryError {
+            handleDomainError(error)
+        } catch {
+            handleError(message: error.localizedDescription)
+        }
+    }
+    
 }
 
 //MARK: - Error Handling
@@ -119,6 +188,17 @@ private extension CalorieСalculatorViewModel {
         errorMessage = message
         showErrorAlert = true
         print("Unexpected Error: \(message)")
+    }
+    
+    func showDuplicateAlert(for existingItem: FoodItem, newCalories: Int) {
+        duplicateItem = existingItem
+        duplicateAlertTitle = "Product already added"
+        duplicateAlertMessage = """
+        "\(existingItem.name)" is already added today with \(existingItem.calories) kcal.
+        
+        Do you want to add it again with \(newCalories) kcal or replace the existing one?
+        """
+        showDuplicateAlert = true
     }
 }
 

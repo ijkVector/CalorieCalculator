@@ -25,6 +25,7 @@ final class DIContainer {
     
     private let foodInputValidator: FoodInputValidating
     
+    private let duplicateChecker: FoodDuplicateChecking
     
     //MARK: - Initialization
     
@@ -44,6 +45,8 @@ final class DIContainer {
             
             self.foodInputValidator = FoodInputValidator()
             
+            self.duplicateChecker = FoodDuplicateChecker()
+            
         } catch {
             fatalError("Failed to create DependencyContainer: \(error.localizedDescription)")
         }
@@ -54,7 +57,8 @@ final class DIContainer {
     func makeCalorieViewModel() -> CalorieСalculatorViewModel {
         CalorieСalculatorViewModel(
             repository: foodRepository,
-            inputValidator: foodInputValidator
+            inputValidator: foodInputValidator,
+            duplicateChecker: duplicateChecker
         )
     }
 }

@@ -10,4 +10,3 @@ import Foundation
 protocol FoodInputValidating: Sendable {
     func validate(_ input: String) throws -> ValidatedFoodInput
 }
-
