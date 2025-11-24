@@ -21,6 +21,10 @@ final class DIContainer {
     
     private let foodRepository: FoodRepositoryProtocol
     
+    //MARK: - Domain Layer
+    
+    private let foodInputValidator: FoodInputValidating
+    
     
     //MARK: - Initialization
     
@@ -38,6 +42,8 @@ final class DIContainer {
             let repository = FoodRepository(store: store)
             self.foodRepository = repository
             
+            self.foodInputValidator = FoodInputValidator()
+            
         } catch {
             fatalError("Failed to create DependencyContainer: \(error.localizedDescription)")
         }
@@ -46,6 +52,9 @@ final class DIContainer {
     //MARK: - Factories
     
     func makeCalorieViewModel() -> CalorieСalculatorViewModel {
-        CalorieСalculatorViewModel(repository: foodRepository)
+        CalorieСalculatorViewModel(
+            repository: foodRepository,
+            inputValidator: foodInputValidator
+        )
     }
 }

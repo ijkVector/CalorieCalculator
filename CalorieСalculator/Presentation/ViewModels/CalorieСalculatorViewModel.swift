@@ -15,11 +15,16 @@ final class CalorieСalculatorViewModel {
     //MARK: - Dependices
     
     private let repository: FoodRepositoryProtocol
+    private let inputValidator: FoodInputValidating
     
     //MARK: - Init
     
-    init(repository: FoodRepositoryProtocol) {
+    init(
+        repository: FoodRepositoryProtocol,
+        inputValidator: FoodInputValidating
+    ) {
         self.repository = repository
+        self.inputValidator = inputValidator
     }
     
     //MARK: - State
@@ -42,6 +47,29 @@ final class CalorieСalculatorViewModel {
     
     //MARK: - Actions
     
+    func addFoodItem(input: String) async {
+        do {
+            let validated = try inputValidator.validate(input)
+            
+            let newItem = FoodItem(
+                name: validated.name,
+                calories: validated.calories
+            )
+            
+            try await repository.createFood(item: newItem)
+            await loadFoodItems()
+            
+        } catch let error as FoodInputValidationError {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+            
+        } catch let error as FoodRepositoryError {
+            handleDomainError(error)
+        } catch {
+            handleError(message: error.localizedDescription)
+        }
+    }
+    
     func loadFoodItems(for date: Date = Date()) async {
         isLoading = true
         errorMessage = nil
@@ -53,18 +81,6 @@ final class CalorieСalculatorViewModel {
             handleError(message: error.localizedDescription)
         }
         isLoading = false
-    }
-    
-    func addFoodItem(name: String, calories: Int) async {
-        let newItem = FoodItem(name: name, calories: calories)
-        do {
-            try await repository.createFood(item: newItem)
-            await loadFoodItems()
-        } catch let error as FoodRepositoryError {
-            handleDomainError(error)
-        } catch {
-            handleError(message: error.localizedDescription)
-        }
     }
     
     func deleteFoodItem(by id: UUID) async {
