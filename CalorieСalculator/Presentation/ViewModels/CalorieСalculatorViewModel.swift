@@ -52,6 +52,7 @@ final class CalorieСalculatorViewModel {
         } catch {
             handleError(message: error.localizedDescription)
         }
+        isLoading = false
     }
     
     func addFoodItem(name: String, calories: Int) async {

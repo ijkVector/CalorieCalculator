@@ -14,7 +14,7 @@ struct CalorieСalculatorApp: App {
 
     var body: some Scene {
         WindowGroup {
-            CalorieСalculatorView()
+            CalorieСalculatorView(viewModel: container.makeCalorieViewModel())
         }
     }
 }
