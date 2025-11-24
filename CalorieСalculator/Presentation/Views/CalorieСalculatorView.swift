@@ -155,33 +155,11 @@ struct CalorieСalculatorView: View {
     // MARK: - Actions
     
     private func addFoodItem() {
-        let parsed = parseInput(inputText)
-        
-        guard let name = parsed.name, let calories = parsed.calories else {
-            return
-        }
-        
         Task {
-            await viewModel.addFoodItem(name: name, calories: calories)
+            await viewModel.addFoodItem(input: inputText)
+            // Очистить ввод только при успехе (ViewModel обрабатывает ошибки)
             inputText = ""
         }
-    }
-    
-    private func parseInput(_ input: String) -> (name: String?, calories: Int?) {
-        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        let components = trimmed.split(separator: " ")
-        
-        guard components.count >= 2 else {
-            return (nil, nil)
-        }
-        
-        // Last component should be calories
-        if let calories = Int(components.last!) {
-            let name = components.dropLast().joined(separator: " ")
-            return (name, calories)
-        }
-        
-        return (nil, nil)
     }
 }
 
