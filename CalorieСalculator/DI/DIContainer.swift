@@ -21,6 +21,10 @@ final class DIContainer {
     
     private let foodRepository: FoodRepositoryProtocol
     
+    private let goalStore: CalorieGoalStoreProtocol
+    
+    private let goalRepository: CalorieGoalRepositoryProtocol
+    
     //MARK: - Domain Layer
     
     private let foodInputValidator: FoodInputValidating
@@ -30,18 +34,27 @@ final class DIContainer {
     //MARK: - Initialization
     
     init() {
-        let schema = Schema([FoodItemEntity.self])
+        let schema = Schema([
+            FoodItemEntity.self,
+            CalorieGoalEntity.self
+        ])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
         do {
             let container = try ModelContainer(for: schema, configurations: [config])
             self.modelContainer = container
             
-            let store = FoodStore(modelContainer: container)
-            self.foodStore = store
+            let foodStore = FoodStore(modelContainer: container)
+            self.foodStore = foodStore
             
-            let repository = FoodRepository(store: store)
-            self.foodRepository = repository
+            let foodRepository = FoodRepository(store: foodStore)
+            self.foodRepository = foodRepository
+            
+            let goalStore = CalorieGoalStore(modelContainer: container)
+            self.goalStore = goalStore
+            
+            let goalRepository = CalorieGoalRepository(store: goalStore)
+            self.goalRepository = goalRepository
             
             self.foodInputValidator = FoodInputValidator()
             
@@ -57,6 +70,7 @@ final class DIContainer {
     func makeCalorieViewModel() -> CalorieСalculatorViewModel {
         CalorieСalculatorViewModel(
             repository: foodRepository,
+            goalRepository: goalRepository,
             inputValidator: foodInputValidator,
             duplicateChecker: duplicateChecker
         )
