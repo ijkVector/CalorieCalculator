@@ -8,10 +8,10 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct CalorieСalculatorView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @Query private var items: [FoodItemEntity]
+    
     var body: some View {
         NavigationSplitView {
             List {
@@ -22,8 +22,8 @@ struct ContentView: View {
                         Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
                     }
                 }
-                .onDelete(perform: deleteItems)
             }
+            .navigationTitle("Today's Meals")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
@@ -38,14 +38,14 @@ struct ContentView: View {
             Text("Select an item")
         }
     }
-
+    
     private func addItem() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
+            let newItem = FoodItemEntity(name: "Яблоко", calories: 100)
             modelContext.insert(newItem)
         }
     }
-
+    
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             for index in offsets {
@@ -55,7 +55,8 @@ struct ContentView: View {
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
-}
+
+//#Preview {
+//    ContentView()
+//        .modelContainer(for: Item.self, inMemory: true)
+//}
