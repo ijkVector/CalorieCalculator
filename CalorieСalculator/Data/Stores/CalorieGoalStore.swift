@@ -8,16 +8,20 @@
 import Foundation
 import SwiftData
 
-final class CalorieGoalStore: CalorieGoalStoreProtocol {
+actor CalorieGoalStore: CalorieGoalStoreProtocol {
     private let modelContainer: ModelContainer
     
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
     }
     
-    @MainActor
+    // Create fresh context for each operation
+    private func makeContext() -> ModelContext {
+        ModelContext(modelContainer)
+    }
+    
     func fetchGoal(for date: Date) async throws -> CalorieGoalDTO? {
-        let context = modelContainer.mainContext
+        let context = makeContext()
         
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
@@ -40,9 +44,8 @@ final class CalorieGoalStore: CalorieGoalStoreProtocol {
         }
     }
     
-    @MainActor
     func saveGoal(_ goal: CalorieGoalDTO) async throws {
-        let context = modelContainer.mainContext
+        let context = makeContext()
         let entity = CalorieGoalEntity(from: goal)
         
         do {
@@ -53,9 +56,8 @@ final class CalorieGoalStore: CalorieGoalStoreProtocol {
         }
     }
     
-    @MainActor
     func updateGoal(_ goal: CalorieGoalDTO) async throws {
-        let context = modelContainer.mainContext
+        let context = makeContext()
         let goalId = goal.id
         
         let predicate = #Predicate<CalorieGoalEntity> { entity in
@@ -81,9 +83,8 @@ final class CalorieGoalStore: CalorieGoalStoreProtocol {
         }
     }
     
-    @MainActor
     func deleteGoal(id: UUID) async throws {
-        let context = modelContainer.mainContext
+        let context = makeContext()
         
         let predicate = #Predicate<CalorieGoalEntity> { entity in
             entity.id == id

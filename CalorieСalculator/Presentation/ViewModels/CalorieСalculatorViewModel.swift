@@ -169,6 +169,38 @@ final class CalorieСalculatorViewModel {
         }
     }
     
+    func updateFoodItem(originalItem: FoodItem, input: String, imageData: Data?) async {
+        do {
+            // Validate the input
+            let validated = try inputValidator.validate(input)
+            
+            // Create updated item with new values
+            let updatedItem = FoodItem(
+                id: originalItem.id,
+                name: validated.name,
+                calories: validated.calories,
+                imageData: imageData,
+                timestamp: originalItem.timestamp
+            )
+            
+            // Update in repository
+            try await foodListrepository.updateFood(item: updatedItem)
+            
+            // Reload to reflect changes
+            await loadFoodItems()
+            
+        } catch let error as FoodInputValidationError {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+            
+        } catch let error as FoodRepositoryError {
+            handleDomainError(error)
+            
+        } catch {
+            handleError(message: error.localizedDescription)
+        }
+    }
+    
     // MARK: - Goal Management
     
     func setCalorieGoal(dailyTarget: Int, for date: Date = Date()) async {

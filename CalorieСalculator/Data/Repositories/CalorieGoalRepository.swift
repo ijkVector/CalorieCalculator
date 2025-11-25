@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class CalorieGoalRepository: CalorieGoalRepositoryProtocol {
+actor CalorieGoalRepository: CalorieGoalRepositoryProtocol {
     private let store: CalorieGoalStoreProtocol
     
     init(store: CalorieGoalStoreProtocol) {
