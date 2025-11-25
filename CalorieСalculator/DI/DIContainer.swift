@@ -8,6 +8,17 @@
 import Foundation
 import SwiftData
 
+enum DIContainerError: Error, LocalizedError {
+    case modelContainerInitializationFailed(Error)
+    
+    var errorDescription: String? {
+        switch self {
+        case .modelContainerInitializationFailed(let error):
+            return "Failed to initialize storage: \(error.localizedDescription)"
+        }
+    }
+}
+
 @MainActor
 final class DIContainer {
     
@@ -33,7 +44,7 @@ final class DIContainer {
     
     //MARK: - Initialization
     
-    init() {
+    init() throws {
         let schema = Schema([
             FoodItemEntity.self,
             CalorieGoalEntity.self
@@ -41,28 +52,29 @@ final class DIContainer {
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         
         do {
-            let container = try ModelContainer(for: schema, configurations: [config])
-            self.modelContainer = container
-            
-            let foodStore = FoodStore(modelContainer: container)
-            self.foodStore = foodStore
-            
-            let foodRepository = FoodRepository(store: foodStore)
-            self.foodRepository = foodRepository
-            
-            let goalStore = CalorieGoalStore(modelContainer: container)
-            self.goalStore = goalStore
-            
-            let goalRepository = CalorieGoalRepository(store: goalStore)
-            self.goalRepository = goalRepository
-            
-            self.foodInputValidator = FoodInputValidator()
-            
-            self.duplicateChecker = FoodDuplicateChecker()
-            
+            self.modelContainer = try ModelContainer(
+                for: schema,
+                configurations: [config]
+            )
         } catch {
-            fatalError("Failed to create DependencyContainer: \(error.localizedDescription)")
+            throw DIContainerError.modelContainerInitializationFailed(error)
         }
+        
+        let foodStore = FoodStore(modelContainer: modelContainer)
+        self.foodStore = foodStore
+        
+        let foodRepository = FoodRepository(store: foodStore)
+        self.foodRepository = foodRepository
+        
+        let goalStore = CalorieGoalStore(modelContainer: modelContainer)
+        self.goalStore = goalStore
+        
+        let goalRepository = CalorieGoalRepository(store: goalStore)
+        self.goalRepository = goalRepository
+        
+        self.foodInputValidator = FoodInputValidator()
+        
+        self.duplicateChecker = FoodDuplicateChecker()
     }
     
     //MARK: - Factories

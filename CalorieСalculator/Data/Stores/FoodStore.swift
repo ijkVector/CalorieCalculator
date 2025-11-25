@@ -13,13 +13,17 @@ actor FoodStore: FoodStoreProtocol {
     //MARK: - Properties
     private let modelContainer: ModelContainer
     
-    private lazy var modelContext = ModelContext(modelContainer)
-    
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
     }
     
+    // Create fresh context for each operation
+    private func makeContext() -> ModelContext {
+        ModelContext(modelContainer)
+    }
+    
     func fetchItems(for date: Date) throws -> [FoodItemDTO] {
+        let context = makeContext()
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         
@@ -37,23 +41,26 @@ actor FoodStore: FoodStoreProtocol {
         )
         
         do {
-            return try modelContext.fetch(descriptor).map { toDTO($0) }
+            return try context.fetch(descriptor).map { toDTO($0) }
         } catch {
             throw FoodStoreError.fetchFailed(error)
         }
     }
     
     func create(item: FoodItemDTO) throws {
-        modelContext.insert(item.toEntity())
+        let context = makeContext()
+        context.insert(item.toEntity())
         do {
-            try modelContext.save()
+            try context.save()
         } catch {
             throw mapSaveError(error, item.id)
         }
     }
     
     func update(item: FoodItemDTO) throws {
-        guard let oldItem = try findItem(with: item.id) else {
+        let context = makeContext()
+        
+        guard let oldItem = try findItem(with: item.id, context: context) else {
             throw FoodStoreError.itemNotFound(item.id)
         }
         
@@ -63,21 +70,23 @@ actor FoodStore: FoodStoreProtocol {
         oldItem.timestamp = item.timestamp
         
         do {
-            try modelContext.save()
+            try context.save()
         } catch {
             throw mapSaveError(error, item.id)
         }
     }
     
     func delete(id: UUID) throws {
-        guard let item = try findItem(with: id) else {
+        let context = makeContext()
+        
+        guard let item = try findItem(with: id, context: context) else {
             throw FoodStoreError.itemNotFound(id)
         }
         
-        modelContext.delete(item)
+        context.delete(item)
         
         do {
-            try modelContext.save()
+            try context.save()
         } catch {
             throw mapSaveError(error, id)
         }
@@ -87,7 +96,7 @@ actor FoodStore: FoodStoreProtocol {
 //MARK: - Private Section 
 
 private extension FoodStore {
-    func findItem(with id: UUID) throws -> FoodItemEntity? {
+    func findItem(with id: UUID, context: ModelContext) throws -> FoodItemEntity? {
         let predicate = #Predicate<FoodItemEntity> { $0.id == id }
         
         var descriptor = FetchDescriptor<FoodItemEntity>(
@@ -96,7 +105,7 @@ private extension FoodStore {
         descriptor.fetchLimit = 1
         
         do {
-            let entities = try modelContext.fetch(descriptor)
+            let entities = try context.fetch(descriptor)
             return entities.first
         } catch {
             throw FoodStoreError.fetchFailed(error)
